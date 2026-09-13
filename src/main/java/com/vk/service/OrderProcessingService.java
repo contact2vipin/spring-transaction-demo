@@ -5,6 +5,9 @@ import com.vk.entities.Product;
 import com.vk.records.request.OrderRequest;
 import com.vk.records.response.OrderResponse;
 import org.springframework.stereotype.Service;
+//import org.springframework.transaction.annotation.Isolation;
+//import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -19,6 +22,8 @@ public class OrderProcessingService {
         this.inventoryService = inventoryService;
     }
 
+//    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    @Transactional
     public OrderResponse placeAnOrder(OrderRequest orderRequest) {
         // get Product inventory
         Product product = inventoryService.getProduct(orderRequest.productId());

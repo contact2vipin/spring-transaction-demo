@@ -23,7 +23,7 @@ public record ApiResponse<T>(
 
     public static <T> ApiResponse<T> failure(T data, String message) {
         return ApiResponse.<T>builder()
-                .success(true)
+                .success(false)
                 .data(data)
                 .message(message)
                 .timestamp(LocalDateTime.now())
