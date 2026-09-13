@@ -15,6 +15,10 @@ public class InventoryService {
     }
 
     public void updateProductDetails(Product product) {
+        // forcefully throwing to simulate use of tx
+        if (product.getPrice().intValue() > 5000) {
+            throw new RuntimeException("DB Crashed....");
+        }
         inventoryRepository.save(product);
     }
 
