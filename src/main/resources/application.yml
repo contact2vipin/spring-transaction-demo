@@ -1,0 +1,24 @@
+# ===== Server =====
+server:
+  port: 9091
+
+# ===== MySQL Datasource =====
+spring:
+  application:
+    name: spring-transaction-demo
+  datasource:
+    url: jdbc:mysql://localhost:3306/transaction_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: Vk@2082025
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  # ===== JPA / Hibernate =====
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+  
