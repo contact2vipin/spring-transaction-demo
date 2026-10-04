@@ -41,7 +41,8 @@ public class OrderProcessingService {
     // NEVER: Ensure the method will run without transaction, throw an exception if found
     // NOT_SUPPORTED: Execute method without transaction,suspending any active transaction
     // SUPPORTS: Supports if there is any active transaction, if not then execute without transaction
-    @Transactional(propagation = Propagation.REQUIRED)
+    // NESTED: Executes within a nested transaction, allowing the nested transaction to roll back independently without affecting the outer transaction
+    @Transactional(propagation = Propagation.REQUIRED)  // Outer Transaction
     public OrderResponse placeAnOrder(OrderRequest orderRequest) {
         // get Product inventory
         Product product = inventoryService.getProduct(orderRequest.productId());
@@ -78,7 +79,7 @@ public class OrderProcessingService {
         // notificationService.sendOrderConfirmationNotification(order); // throw "Existing transaction found for transaction marked with propagation 'never'"
 
         // validate payment - MANDATORY
-        //paymentValidatorService.validatePayment(order); // This only needs existing transaction, if an exception occurs inside it, it will roll back the whole transaction
+        paymentValidatorService.validatePayment(order); // This only needs existing transaction, if an exception occurs inside it, it will roll back the whole transaction
 
         //It should also work, when we comment @Transactional code written at this method
         getCustomerDetails(); // Should work with or without any active transaction
