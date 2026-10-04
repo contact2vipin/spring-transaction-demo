@@ -15,13 +15,19 @@ public class OrderProcessingService {
 
     private final OrderService orderService;
     private final InventoryService inventoryService;
+    private final AuditLogService auditLogService;
 
-    public OrderProcessingService(OrderService orderService, InventoryService inventoryService) {
+    public OrderProcessingService(
+            OrderService orderService,
+            InventoryService inventoryService,
+            AuditLogService auditLogService) {
         this.orderService = orderService;
         this.inventoryService = inventoryService;
+        this.auditLogService = auditLogService;
     }
 
     // REQUIRED: join an existing transaction or create a new one if not exist
+    // REQUIRED_NEW: Always create new transaction, suspending if any existing transaction
     @Transactional(propagation = Propagation.REQUIRED)
     public OrderResponse placeAnOrder(OrderRequest orderRequest) {
         // get Product inventory
@@ -37,12 +43,18 @@ public class OrderProcessingService {
 
         // Update total price in order entity
         order.setTotalPrice(BigDecimal.valueOf(order.getQuantity()).multiply(product.getPrice()));
-
-        // save order
-        Order savedOrder = orderService.saveOrder(order);
-
-        // Update stock in inventory
-        updateInventoryStock(order, product);
+        Order savedOrder = null;
+        try {
+            // save order
+            savedOrder = orderService.saveOrder(order);
+            // Update stock in inventory
+            updateInventoryStock(order, product);
+            // Required new transaction
+            auditLogService.logAuditDetails(order, "Order placement succeeded");
+        } catch (Exception ex) {
+            // Required new transaction
+            auditLogService.logAuditDetails(order, "Order placement failed");
+        }
 
         return new OrderResponse(
                 savedOrder.getId(),
