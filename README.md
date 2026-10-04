@@ -11,6 +11,10 @@ public void processOrder() {
     // business logic
 }
 ```
+## Points to remember:
+> - We can call normal method inside a transactional method of the same class
+> - We can call another transactional method inside a transactional method of the same class
+> - We can call transactional method inside a normal method of the same class but transaction won't trigger. Because @Transactional works when the method is invoked through the Spring proxy, not when another method in the same class directly calls it.
 
 Propagation determines whether the method:
 
