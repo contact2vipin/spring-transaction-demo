@@ -16,14 +16,17 @@ public class OrderProcessingService {
     private final OrderService orderService;
     private final InventoryService inventoryService;
     private final AuditLogService auditLogService;
+    private final PaymentValidatorService paymentValidatorService;
 
     public OrderProcessingService(
             OrderService orderService,
             InventoryService inventoryService,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            PaymentValidatorService paymentValidatorService) {
         this.orderService = orderService;
         this.inventoryService = inventoryService;
         this.auditLogService = auditLogService;
+        this.paymentValidatorService = paymentValidatorService;
     }
 
     // REQUIRED: join an existing transaction or create a new one if not exist
