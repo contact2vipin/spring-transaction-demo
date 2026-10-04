@@ -26,10 +26,10 @@ Spring provides the following propagation levels:
 | --- | --- | --- |
 | `REQUIRED` | Joins it | Creates a new transaction |
 | `REQUIRES_NEW` | Suspends it and creates a new transaction | Creates a new transaction |
-| `SUPPORTS` | Joins it | Executes without a transaction |
-| `NOT_SUPPORTED` | Suspends it | Executes without a transaction |
 | `MANDATORY` | Joins it | Throws exception |
 | `NEVER` | Throws exception | Executes without a transaction |
+| `SUPPORTS` | Joins it | Executes without a transaction |
+| `NOT_SUPPORTED` | Suspends it | Executes without a transaction |
 | `NESTED` | Creates a nested transaction/savepoint | Creates a new transaction |
 
 ---
@@ -640,3 +640,94 @@ MANDATORY      → Existing transaction required
 NEVER          → Existing transaction forbidden
 NESTED         → Use nested scope/savepoint
 ```
+# Limitations
+## Qn\. Can we call transactional method inside non-transactional method in same class?
+Yes — **you can call it**, but there is an important Spring caveat.
+
+If the non-transactional method and `@Transactional` method are in the **same class**, the call is a **self-invocation**, so it bypasses Spring's transactional proxy.
+
+```
+@Service
+public class OrderService {
+
+    public void processOrder() {
+        saveOrder(); // @Transactional is NOT applied here
+    }
+
+    @Transactional
+    public void saveOrder() {
+        // database operations
+    }
+}
+```
+
+In this case, `saveOrder()` **will execute**, but Spring will generally **not start a transaction** for it because the call doesn't pass through the Spring proxy.
+
+### Recommended approach
+
+Move the transactional method to another Spring bean:
+
+```
+@Service
+public class OrderService {
+
+    private final OrderTransactionService transactionService;
+
+    public OrderService(OrderTransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
+
+    public void processOrder() {
+        transactionService.saveOrder();
+    }
+}
+```
+
+```
+@Service
+public class OrderTransactionService {
+
+    @Transactional
+    public void saveOrder() {
+        // Runs inside a Spring-managed transaction
+    }
+}
+```
+
+Now the call goes through the Spring proxy:
+
+```
+OrderService
+    |
+    | processOrder()
+    |
+    v
+OrderTransactionService proxy
+    |
+    | @Transactional
+    v
+saveOrder()
+    |
+    +--- Transaction started
+```
+
+### What if the caller itself is transactional?
+
+Even if you have:
+
+```
+@Transactional
+public void outerMethod() {
+    innerMethod();
+}
+
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void innerMethod() {
+}
+```
+
+`innerMethod()` **will not get `REQUIRES_NEW` behavior** when called directly from `outerMethod()` in the same class. The self-invocation bypasses the proxy, so the existing transaction continues.
+
+**Rule of thumb:**
+
+> `@Transactional` works when the method is invoked **through the Spring proxy**, not when another method in the same class directly calls it.

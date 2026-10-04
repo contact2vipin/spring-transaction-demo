@@ -17,21 +17,25 @@ public class OrderProcessingService {
     private final InventoryService inventoryService;
     private final AuditLogService auditLogService;
     private final PaymentValidatorService paymentValidatorService;
+    private final NotificationService notificationService;
 
     public OrderProcessingService(
             OrderService orderService,
             InventoryService inventoryService,
             AuditLogService auditLogService,
-            PaymentValidatorService paymentValidatorService) {
+            PaymentValidatorService paymentValidatorService,
+            NotificationService notificationService) {
         this.orderService = orderService;
         this.inventoryService = inventoryService;
         this.auditLogService = auditLogService;
         this.paymentValidatorService = paymentValidatorService;
+        this.notificationService = notificationService;
     }
 
     // REQUIRED: join an existing transaction or create a new one if not exist
     // REQUIRED_NEW: Always create new transaction, suspending if any existing transaction
     // MANDATORY: Require an existing transaction, if nothing found it will throw an exception
+    // NEVER: Ensure the method will run without transaction, throw an exception if found
     @Transactional(propagation = Propagation.REQUIRED)
     public OrderResponse placeAnOrder(OrderRequest orderRequest) {
         // get Product inventory
@@ -60,7 +64,13 @@ public class OrderProcessingService {
             auditLogService.logAuditDetails(order, "Order placement failed");
         }
 
-        // validate payment
+        // Here we can retry or send confirmation to user etc. but every time when we retry we don't want to send notification to user.
+        // Because of this, I don't want my sendOrderConfirmationNotification to be executed as a part of any transaction. that's why I commented this
+        // and added @Transactional(propagation = Propagation.NEVER), so that no one should accidentally add this method within any transaction.
+        // processOrder method in this class is an alternate way of this implementation as it will throw exception. as we are calling it inside a transaction.
+        // notificationService.sendOrderConfirmationNotification(order); // throw "Existing transaction found for transaction marked with propagation 'never'"
+
+        // validate payment - MANDATORY
         paymentValidatorService.validatePayment(order); // This only needs existing transaction, if an exception occurs inside it, it will roll back the whole transaction
 
         return new OrderResponse(
@@ -70,6 +80,21 @@ public class OrderProcessingService {
                 savedOrder.getTotalPrice()
         );
     }
+
+    // Note: @Transactional works when the method is invoked through the Spring proxy, not when another method in the same class directly calls it.
+    // Show below method won't trigger transaction and because of this we will get "No existing transaction found for transaction marked with propagation 'mandatory'"
+    // Add this method, just to verify the same behaviour, for correct solution i have added OrderProcessService and added this method there.
+    // Call this method after placeAnOrder is successfully completed
+    /*public OrderResponse processOrder(OrderRequest orderRequest) {
+        // Step 1: Place the order
+        OrderResponse savedOrder = placeAnOrder(orderRequest);
+        Order order = Order.builder()
+                .id(savedOrder.id())
+                .build();
+        // Step 2: Send notification (non-transactional)
+        notificationService.sendOrderConfirmationNotification(order);
+        return savedOrder;
+    }*/
 
     private static void validateStockAvailability(OrderRequest orderRequest, Product product) {
         if (orderRequest.quantity() > product.getStockQuantity()) {
