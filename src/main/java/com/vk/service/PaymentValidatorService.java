@@ -17,7 +17,12 @@ public class PaymentValidatorService {
     @Autowired
     private AuditLogRepository auditLogRepository;
 
-    @Transactional(propagation = Propagation.MANDATORY)
+    /**
+     * Unable to showcase NESTED propagation example because JpaDialect does not support savepoints - check your JPA provider's capabilities
+     * */
+
+//    @Transactional(propagation = Propagation.MANDATORY)
+    @Transactional(propagation = Propagation.NESTED) // Inner Transaction
     public void validatePayment(Order order) {
         // Assume payment processing happens here
         boolean paymentSuccessful = false;
