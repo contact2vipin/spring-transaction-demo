@@ -18,24 +18,28 @@ public class OrderProcessingService {
     private final AuditLogService auditLogService;
     private final PaymentValidatorService paymentValidatorService;
     private final NotificationService notificationService;
+    private final ProductRecommendationService productRecommendationService;
 
     public OrderProcessingService(
             OrderService orderService,
             InventoryService inventoryService,
             AuditLogService auditLogService,
             PaymentValidatorService paymentValidatorService,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            ProductRecommendationService productRecommendationService) {
         this.orderService = orderService;
         this.inventoryService = inventoryService;
         this.auditLogService = auditLogService;
         this.paymentValidatorService = paymentValidatorService;
         this.notificationService = notificationService;
+        this.productRecommendationService = productRecommendationService;
     }
 
     // REQUIRED: join an existing transaction or create a new one if not exist
     // REQUIRED_NEW: Always create new transaction, suspending if any existing transaction
     // MANDATORY: Require an existing transaction, if nothing found it will throw an exception
     // NEVER: Ensure the method will run without transaction, throw an exception if found
+    // NOT_SUPPORTED: Execute method without transaction,suspending any active transaction
     @Transactional(propagation = Propagation.REQUIRED)
     public OrderResponse placeAnOrder(OrderRequest orderRequest) {
         // get Product inventory
@@ -63,6 +67,8 @@ public class OrderProcessingService {
             // Required new transaction
             auditLogService.logAuditDetails(order, "Order placement failed");
         }
+
+        productRecommendationService.getRecommendations();
 
         // Here we can retry or send confirmation to user etc. but every time when we retry we don't want to send notification to user.
         // Because of this, I don't want my sendOrderConfirmationNotification to be executed as a part of any transaction. that's why I commented this

@@ -20,6 +20,18 @@ Propagation determines whether the method:
 - Suspends an existing transaction
 - Throws an exception when a transaction is or is not present
 
+## Test Data
+
+| Propagation | Happy Case Data                           | Failure case data                                                  |
+| --- |-------------------------------------------|--------------------------------------------------------------------|
+| `REQUIRED` |                                   |                                                                    |
+| `REQUIRES_NEW` |  |                                                                    |
+| `MANDATORY` |                                   |                                                                    |
+| `NEVER` |                           |                                                                    |
+| `NOT_SUPPORTED` | {"productId": 3, "quantity": 1}| {"productId": 1, "quantity": 2} or {"productId": 3, "quantity": 2} |
+| `SUPPORTS` |                                   |                                                                    |
+| `NESTED` |     |                                                                    |
+
 Spring provides the following propagation levels:
 
 | Propagation | Existing Transaction | No Existing Transaction |
@@ -28,8 +40,8 @@ Spring provides the following propagation levels:
 | `REQUIRES_NEW` | Suspends it and creates a new transaction | Creates a new transaction |
 | `MANDATORY` | Joins it | Throws exception |
 | `NEVER` | Throws exception | Executes without a transaction |
-| `SUPPORTS` | Joins it | Executes without a transaction |
 | `NOT_SUPPORTED` | Suspends it | Executes without a transaction |
+| `SUPPORTS` | Joins it | Executes without a transaction |
 | `NESTED` | Creates a nested transaction/savepoint | Creates a new transaction |
 
 ---
