@@ -31,6 +31,7 @@ public class OrderProcessingService {
 
     // REQUIRED: join an existing transaction or create a new one if not exist
     // REQUIRED_NEW: Always create new transaction, suspending if any existing transaction
+    // MANDATORY: Require an existing transaction, if nothing found it will throw an exception
     @Transactional(propagation = Propagation.REQUIRED)
     public OrderResponse placeAnOrder(OrderRequest orderRequest) {
         // get Product inventory
@@ -58,6 +59,9 @@ public class OrderProcessingService {
             // Required new transaction
             auditLogService.logAuditDetails(order, "Order placement failed");
         }
+
+        // validate payment
+        paymentValidatorService.validatePayment(order); // This only needs existing transaction, if an exception occurs inside it, it will roll back the whole transaction
 
         return new OrderResponse(
                 savedOrder.getId(),
