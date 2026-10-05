@@ -26,7 +26,7 @@ public class ReadUnCommittedDemo {
             try {
                 Thread.sleep(2000); // Wait a moment to ensure Thread A starts
                 int stock = productService.checkStock(id);
-                System.out.println("Stock ready by Transaction B: "+ stock);
+                System.out.println("Stock read by Transaction B: "+ stock);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
