@@ -5,6 +5,7 @@ import com.vk.entities.Product;
 import com.vk.records.request.OrderRequest;
 import com.vk.records.response.OrderResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +43,8 @@ public class OrderProcessingService {
     // NOT_SUPPORTED: Execute method without transaction,suspending any active transaction
     // SUPPORTS: Supports if there is any active transaction, if not then execute without transaction
     // NESTED: Executes within a nested transaction, allowing the nested transaction to roll back independently without affecting the outer transaction
-    @Transactional(propagation = Propagation.REQUIRED)  // Outer Transaction
+    /**ISOLATION: controls the visibility of changes made by one transaction to other transaction*/
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT)  // Outer Transaction
     public OrderResponse placeAnOrder(OrderRequest orderRequest) {
         // get Product inventory
         Product product = inventoryService.getProduct(orderRequest.productId());
