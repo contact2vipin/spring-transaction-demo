@@ -5,7 +5,9 @@ import com.vk.records.response.ApiResponse;
 import com.vk.records.response.OrderResponse;
 import com.vk.service.OrderProcessService;
 import com.vk.service.OrderProcessingService;
+import com.vk.service.isolation_demo.ReadCommittedDemo;
 import com.vk.service.isolation_demo.ReadUnCommittedDemo;
+import com.vk.service.isolation_demo.RepeatableReadDemo;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,14 +18,20 @@ public class OrderProcessingController {
     private final OrderProcessingService orderProcessingService;
     private final OrderProcessService orderProcessService;
     private final ReadUnCommittedDemo readUnCommittedDemo;
+    private final ReadCommittedDemo readCommittedDemo;
+    private final RepeatableReadDemo repeatableReadDemo;
 
     public OrderProcessingController(
             OrderProcessingService orderProcessingService,
             OrderProcessService orderProcessService,
-            ReadUnCommittedDemo readUnCommittedDemo) {
+            ReadUnCommittedDemo readUnCommittedDemo,
+            ReadCommittedDemo readCommittedDemo,
+            RepeatableReadDemo repeatableReadDemo) {
         this.orderProcessingService = orderProcessingService;
         this.orderProcessService = orderProcessService;
         this.readUnCommittedDemo = readUnCommittedDemo;
+        this.readCommittedDemo = readCommittedDemo;
+        this.repeatableReadDemo = repeatableReadDemo;
     }
 
     @PostMapping
@@ -36,9 +44,21 @@ public class OrderProcessingController {
         );*/
     }
 
-    @GetMapping("/isolation-test")
-    public String testIsolation() throws InterruptedException {
+    @GetMapping("/isolation-read-uncommitted")
+    public String testIsolationReadUnCommitted() throws InterruptedException {
         readUnCommittedDemo.testReadUnCommitted(1L);
+        return "Success: See the console.";
+    }
+
+    @GetMapping("/isolation-read-committed")
+    public String testIsolationReadCommitted() throws InterruptedException {
+        readCommittedDemo.testReadCommitted(1L);
+        return "Success: See the console.";
+    }
+
+    @GetMapping("/isolation-repeatable-read")
+    public String testIsolationRepeatableRead() throws InterruptedException {
+        repeatableReadDemo.testRepeatableRead(1L);
         return "Success: See the console.";
     }
 }

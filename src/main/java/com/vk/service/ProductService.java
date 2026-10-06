@@ -19,7 +19,9 @@ public class ProductService {
     private EntityManager entityManager;
 
     // Transaction A:
-    @Transactional(isolation = Isolation.READ_UNCOMMITTED)
+//    @Transactional(isolation = Isolation.READ_UNCOMMITTED) // It allows dirty reads, which create data inconsistency in application transaction
+//    @Transactional(isolation = Isolation.READ_COMMITTED) // It allows dirty reads, which create data inconsistency in application transaction
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public void updateStock(Long productId, int stock) throws InterruptedException {
         // Retrieve the product and update its stock
 
@@ -33,13 +35,14 @@ public class ProductService {
         // Simulate a long-running transaction (does not commit yet)
         System.out.println("Transaction A: Stock updated to "+ stock);
         Thread.sleep(5000);
-        System.out.println("Transaction A: Rolling back the update");
-        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly(); // explicit rollback
+//        System.out.println("Transaction A: Rolling back the update");
+//        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly(); // explicit rollback
 //        System.out.println("Transaction A: Committed the update");
     }
 
     // Transaction B: Read stock
-    @Transactional(isolation = Isolation.READ_UNCOMMITTED)
+//    @Transactional(isolation = Isolation.READ_UNCOMMITTED)
+    @Transactional(isolation = Isolation.READ_COMMITTED) // Gives last committed value
     public int checkStock(Long productId) {
         // Retrieve the product and read its stock (potentially dirty read)
         Product product = inventoryRepository.findById(productId)
@@ -47,5 +50,31 @@ public class ProductService {
 
         System.out.println("Transaction B: Read stock as "+ product.getStockQuantity());
         return product.getStockQuantity();
+    }
+
+    // Transaction C: Read stock multiple times
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public void fetchStock(Long productId) {
+        // Retrieve the product and read its stock (potentially dirty read)
+
+        // First Read
+        Product product1 = inventoryRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found!"));
+
+        System.out.println("Transaction C: Read stock as "+ product1.getStockQuantity());
+        // Simulate a delay to allow Transaction A to update the stock
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Second Read
+        Product product2 = inventoryRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found!"));
+
+        System.out.println("Transaction C: Read stock as "+ product2.getStockQuantity());
+        // Simulate a delay to allow Transaction A to update the stock
+
     }
 }
