@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Service
 public class OrderProcessingService {
@@ -55,6 +56,7 @@ public class OrderProcessingService {
         Order order = Order.builder()
                 .quantity(orderRequest.quantity())
                 .productId(orderRequest.productId())
+                .trackingId(UUID.randomUUID().toString())
                 .build();
 
         // Update total price in order entity
@@ -90,7 +92,8 @@ public class OrderProcessingService {
                 savedOrder.getId(),
                 savedOrder.getProductId(),
                 savedOrder.getQuantity(),
-                savedOrder.getTotalPrice()
+                savedOrder.getTotalPrice(),
+                savedOrder.getTrackingId()
         );
     }
 
