@@ -23,5 +23,6 @@ public class Order {
     private Long productId;
     private Integer quantity;
     private BigDecimal totalPrice;
+    private String trackingId;
 }
 

@@ -3,11 +3,13 @@ package com.vk.service;
 import com.vk.entities.Product;
 import com.vk.exception.ProductNotFoundException;
 import com.vk.repository.InventoryRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
@@ -28,5 +30,9 @@ public class InventoryService {
     public Product getProduct(Long id) {
         return inventoryRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
+    }
+
+    public boolean checkProductAvailability(Long id) {
+        return true;
     }
 }
